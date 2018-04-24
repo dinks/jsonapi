@@ -86,6 +86,22 @@ func UnmarshalPayload(in io.Reader, model interface{}) error {
 	return unmarshalNode(payload.Data, reflect.ValueOf(model), nil)
 }
 
+// Unmarshal does the same as UnmarshalPayload except it just returns the error
+// and doesn't write in results. Useful if you use your own JSON rendering
+// library.
+func Unmarshal(payload OnePayload, model interface{}) error {
+	if payload.Included != nil {
+		includedMap := make(map[string]*Node)
+		for _, included := range payload.Included {
+			key := fmt.Sprintf("%s,%s", included.Type, included.ID)
+			includedMap[key] = included
+		}
+
+		return unmarshalNode(payload.Data, reflect.ValueOf(model), &includedMap)
+	}
+	return unmarshalNode(payload.Data, reflect.ValueOf(model), nil)
+}
+
 // UnmarshalManyPayload converts an io into a set of struct instances using
 // jsonapi tags on the type's struct fields.
 func UnmarshalManyPayload(in io.Reader, t reflect.Type) ([]interface{}, error) {
